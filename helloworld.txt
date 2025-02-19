@@ -1,0 +1,4 @@
+Hello world!
+This is an example for output
+That is piped to an output file
+And afterwards displayed in your pdf
