@@ -52,22 +52,28 @@ def solving_system_with_LU(LU:np.ndarray, b:np.array) -> np.array:
 
 # TODO Neville's algorithm
 
+# TODO
 def bisection(M:np.int64, x_samp:np.array, x_interp:np.array) -> np.ndarray:
 # Assumes x_samp are uniformly spaced
     if (M > x_samp.shape[0]):
         print("M is too large for the array x_samp")
-        return False
+        return
     for (i,x) in enumerate(x_interp):
         l_idx = np.int64(0)
         r_idx = np.int64(x_samp.shape[0]-1)
         while (r_idx - l_idx > 1):
-            m_idx = np.int64((l_idx + r_idx)*0.5)
+            m_idx = np.int64(np.floor((l_idx + r_idx)*0.5))
             if (x <= x_samp[m_idx]):
                 r_idx = m_idx
             elif (x > x_samp[m_idx]):
                 l_idx = m_idx
+        m = (x_samp[l_idx] + x_samp[r_idx])*0.5
         # Computing the left boundary index (ignoring range)
-        l_idx -= np.int64(np.floor(0.5*M))
+        l_idx -= np.int64(np.ceil(0.5*M-1))
+        # Correcting left boundary if x is closer to the right boundary 
+        # (in which case the right boundary is seen as the first point instead of the second)
+        if ((x > m) & (M % 2 == 1)):
+            l_idx += np.float64(1)
         # Checking range
         if l_idx < 0:
             l_idx = 0
@@ -76,25 +82,25 @@ def bisection(M:np.int64, x_samp:np.array, x_interp:np.array) -> np.ndarray:
         x_interp[i] = l_idx
     return np.int64(x_interp)
 
-def neville(M, x_samp, y_samp, x_interp):
+def neville(M:np.int64, x_samp:np.array, y_samp:np.array, x_interp:np.array) -> np.ndarray:
+    if (M < 1):
+        print("M is too small")
+        return
     # Finding left index of M tabulated points using bisection
-    l_indices = bisection(M, x_samp.copy(), x_interp.copy())
-    #y_samp = y_samp[np.newaxis,:]
+    l_indices = bisection(M, x_samp.copy(), x_interp.copy()) # correct!
     # Initializing matrix P
     Ps = np.zeros((x_interp.shape[0], M), dtype=np.float64)
     for i in range(M):
-        Ps[:,i] = y_samp[l_indices+i]
-    print(Ps)
+        Ps[:,i] = y_samp[l_indices+i] # correct!
     # Looping over orders k and current intervals
     for k in range(1, M):
-        for i in range(M-1-k):
-            j = i+k
-            Ps[:,i] = ((x_samp[l_indices+j]-x_interp)*Ps[:,i]+(x_interp-x_samp[l_indices+i])*Ps[:,j])/(x_samp[l_indices+j]-x_samp[l_indices+i])
+        for i in range(M-k):
+            j = i+k # note this j is only for the x_samp, as Ps is overwritten so just j=i+1 as index
+            Ps[:,i] = ((x_samp[l_indices+j]-x_interp)*Ps[:,i]+(x_interp-x_samp[l_indices+i])*Ps[:,i+1])/(x_samp[l_indices+j]-x_samp[l_indices+i])
+    if (M < 2):
+        return Ps[:,0], 0
     error_estimate = np.absolute(Ps[:,0]-Ps[:,1])
     return Ps[:,0], error_estimate
-
-# TODO something wrong with neville (bisection seems fine)
-# For lower M, result is better than for larger M (shouldnt be right)
 
 data=np.genfromtxt(os.path.join(sys.path[0],"Vandermonde.txt"),comments='#',dtype=np.float64)
 x=data[:,0]
@@ -121,7 +127,7 @@ LU_V = LU_decomposition(V.copy())
 #print(LU_V)
 
 # Solving for c
-c = solving_system_with_LU(LU_V, y.copy())
+c0 = solving_system_with_LU(LU_V, y.copy())
 #print(c)
 
 # Constructing the polynomial y
@@ -133,7 +139,23 @@ def polynomial(c, x):
 
 # 2b
 
-# 3b
+M=20
+
+# 2c
+
+# Iterative improvements
+# First iteration
+c = c0 - solving_system_with_LU(LU_V, (np.matmul(V,c0)-y).copy())
+c1 = c.copy()
+# Next nine iterations
+for i in range(9):
+    c -= solving_system_with_LU(LU_V, (np.matmul(V,c)-y).copy())
+c10 = c.copy()
+
+#TODO is matmul allowed?
+
+# 2d
+
 
 
 #The plotting code below assumes you've given the interpolated
@@ -144,14 +166,14 @@ def polynomial(c, x):
 #to the given points, not in between them)
 # yya=np.zeros(1001,dtype=np.float64) #replace!
 # ya=np.zeros(len(x),dtype=np.float64) #replace!
-yya = polynomial(c, xx)
-ya = polynomial(c, x)
-yyb = neville(3, x, y, xx)[0]
-yb = neville(3, x, y, x)[0]
-yyc1=yya #replace!
-yc1=ya #replace!
-yyc10=yya #replace!
-yc10=ya #replace!
+yya = polynomial(c0, xx)
+ya = polynomial(c0, x)
+yyb = neville(M, x, y, xx)[0]
+yb = neville(M, x, y, x)[0]
+yyc1 = polynomial(c1, xx)
+yc1 = polynomial(c1, x)
+yyc10 = polynomial(c10, xx)
+yc10 = polynomial(c10, x)
 
 #Don't forget to output the coefficients you find with your LU routine
 
