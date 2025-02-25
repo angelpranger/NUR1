@@ -1,15 +1,26 @@
-#This script is to get you started with reading the data and plotting it
-#You are free to change whatever you like/do it completely differently,
-#as long as the results are clearly presented
+#!/usr/bin/env python
 
 import numpy as np
+import timeit
 import sys
 import os
 import matplotlib.pyplot as plt
 
+###################################################################
 
-# gecheckt, werkt voor A, geeft geen nans meer voor V
+# Importing data
+
+data=np.genfromtxt(os.path.join(sys.path[0],"Vandermonde.txt"),comments='#',dtype=np.float64)
+x=data[:,0]
+y=data[:,1]
+xx=np.linspace(x[0],x[-1],1001) # x values to interpolate at
+
+###################################################################
+
+# Functions used
+
 def LU_decomposition(matrix:np.ndarray):
+    """TODO"""
     # Assume alpha_ii = 1
     # Loop over the columns j
     for j in range(matrix.shape[0]):
@@ -29,8 +40,8 @@ def LU_decomposition(matrix:np.ndarray):
             matrix[i,j] = (matrix[i,j]-term)*beta_jj
     return np.float64(matrix)
 
-
 def solving_system_with_LU(LU:np.ndarray, b:np.array) -> np.array:
+    """TODO"""
     # Knowing that alpha_ii = 1
     # Forward substitution
     # Keep y_0 = b_0 as alpha_00 = 1
@@ -49,12 +60,9 @@ def solving_system_with_LU(LU:np.ndarray, b:np.array) -> np.array:
         b[i] = (b[i]-term)/LU[i,i]
     return np.float64(b)
 
-
-# TODO Neville's algorithm
-
-# TODO
 def bisection(M:np.int64, x_samp:np.array, x_interp:np.array) -> np.ndarray:
-# Assumes x_samp are uniformly spaced
+    """TODO"""
+    # Assumes x_samp are uniformly spaced
     if (M > x_samp.shape[0]):
         print("M is too large for the array x_samp")
         return
@@ -83,6 +91,7 @@ def bisection(M:np.int64, x_samp:np.array, x_interp:np.array) -> np.ndarray:
     return np.int64(x_interp)
 
 def neville(M:np.int64, x_samp:np.array, y_samp:np.array, x_interp:np.array) -> np.ndarray:
+    """TODO"""
     if (M < 1):
         print("M is too small")
         return
@@ -102,82 +111,41 @@ def neville(M:np.int64, x_samp:np.array, y_samp:np.array, x_interp:np.array) -> 
     error_estimate = np.absolute(Ps[:,0]-Ps[:,1])
     return Ps[:,0], error_estimate
 
-data=np.genfromtxt(os.path.join(sys.path[0],"Vandermonde.txt"),comments='#',dtype=np.float64)
-x=data[:,0]
-y=data[:,1]
-xx=np.linspace(x[0],x[-1],1001) #x values to interpolate at
-
-#Insert your own code to calculate interpolated y values here!
-
-# 2a
-
-# Constructing V
-V = np.zeros((x.shape[0], x.shape[0]), dtype=np.float64)
-for j in range(V.shape[0]):
-    V[:,j] = np.power(x,j)
-#print(V) this is correct TODO
-
-# check, LU is correct
-# A = np.array([[1,2,4],[3,8,14],[2,6,13]])
-# print(A)
-# print(LU_decomposition(A))
-
-# LU-decomposing V
-LU_V = LU_decomposition(V.copy())
-#print(LU_V)
-
-# Solving for c
-c0 = solving_system_with_LU(LU_V, y.copy())
-#print(c)
-
-# Constructing the polynomial y
-def polynomial(c, x):
+def polynomial(c:np.array, x:np.array) -> np.array:
+    """Constructing the values y of the polynomial with coefficients given by c at points x.
+    Returns y values."""
     y = np.float64(0)
     for j in range(c.shape[0]):
         y += c[j] * np.power(x,j)
     return np.float64(y)
 
-# 2b
+###################################################################
 
-M=20
+# 2a
 
-# 2c
+def q2a(x:np.array, y:np.array, xx:np.array) -> np.ndarray:
+    """Constructing Vandermonde matrix V from data x, LU-decomposing V and solving Vc=y for c.
+    Returns c and the values of the polynomial, yya and ya, corresponding to xx and x."""
+    # Constructing V
+    V = np.zeros((x.shape[0], x.shape[0]), dtype=np.float64)
+    for j in range(V.shape[0]):
+        V[:,j] = np.power(x,j)
+    # LU-decomposing V
+    LU_V = LU_decomposition(V.copy())
+    # Solving for c
+    c0 = solving_system_with_LU(LU_V, y.copy())
+    # Finding the polynomial values y
+    yya = polynomial(c0, xx)
+    ya = polynomial(c0, x)
+    return V, LU_V, c0, yya, ya
 
-# Iterative improvements
-# First iteration
-c = c0 - solving_system_with_LU(LU_V, (np.matmul(V,c0)-y).copy())
-c1 = c.copy()
-# Next nine iterations
-for i in range(9):
-    c -= solving_system_with_LU(LU_V, (np.matmul(V,c)-y).copy())
-c10 = c.copy()
+V, LU_V, c0, yya, ya = q2a(x, y, xx)
 
-#TODO is matmul allowed?
+# Printing the values of c
+print("The coefficients of the polynomial found with LU-decomposition are")
+print(c0)
 
-# 2d
-
-
-
-#The plotting code below assumes you've given the interpolated
-#values for 2a suffix "a", those for 2b "b", and those for 2c 
-#"c1" and "c10" – feel free to change these
-#Note that you interpolate to xx for the top panel but to
-#x for the bottom panel (since we can only compare the accuracy
-#to the given points, not in between them)
-# yya=np.zeros(1001,dtype=np.float64) #replace!
-# ya=np.zeros(len(x),dtype=np.float64) #replace!
-yya = polynomial(c0, xx)
-ya = polynomial(c0, x)
-yyb = neville(M, x, y, xx)[0]
-yb = neville(M, x, y, x)[0]
-yyc1 = polynomial(c1, xx)
-yc1 = polynomial(c1, x)
-yyc10 = polynomial(c10, xx)
-yc10 = polynomial(c10, x)
-
-#Don't forget to output the coefficients you find with your LU routine
-
-#Plot of points with absolute difference shown on a log scale (question 2a)
+# Plot of points with absolute difference shown on a log scale (question 2a)
 fig=plt.figure()
 gs=fig.add_gridspec(2,hspace=0,height_ratios=[2.0,1.0])
 axs=gs.subplots(sharex=True,sharey=False)
@@ -195,14 +163,44 @@ axs[0].legend(frameon=False,loc="lower left")
 axs[1].plot(x,abs(y-ya),color='orange')
 plt.savefig('my_vandermonde_sol_2a.png',dpi=600)
 
-#For questions 2b and 2c, add this block
+###################################################################
+
+# 2b
+
+def q2b(x:np.array, y:np.array, xx:np.array, M:np.int64):
+    """Computing the lagrange polynomial through the given data points (x,y) using Neville's algorithm (iff M=x.shape[0]).
+    Returns values yyb and yb of the polynomial corresponding to the points in xx and x respectively."""
+    yyb = neville(M, x, y, xx)[0]
+    yb = neville(M, x, y, x)[0]
+    return yyb, yb
+
+yyb, yb = q2b(x, y, xx, 20)
+
+# For questions 2b and 2c, add this block
 line,=axs[0].plot(xx,yyb,linestyle='dashed',color='green')
 line.set_label('Via Neville\'s algorithm')
 axs[0].legend(frameon=False,loc="lower left")
 axs[1].plot(x,abs(y-yb),linestyle='dashed',color='green')
 plt.savefig('my_vandermonde_sol_2b.png',dpi=600)
 
-#For question 2c, add this block too
+###################################################################
+
+# 2c
+
+def q2c(LU_V:np.ndarray, V:np.ndarray, c:np.array, y:np.array, x:np.array, xx:np.array, num:np.int64) -> np.ndarray:
+    """"""
+    # Iterative improvements
+    for i in range(num):
+        c -= solving_system_with_LU(LU_V, (np.matmul(V,c)-y).copy())
+    # Computing polynomial values
+    yyc = polynomial(c, xx)
+    yc = polynomial(c, x)
+    return yyc, yc
+
+yyc1, yc1 = q2c(LU_V, V, c0.copy(), y, x, xx, 1)
+yyc10, yc10 = q2c(LU_V, V, c0.copy(), y, x, xx, 10)
+
+# For question 2c, add this block too
 line,=axs[0].plot(xx,yyc1,linestyle='dotted',color='red')
 line.set_label('LU with 1 iteration')
 axs[1].plot(x,abs(y-yc1),linestyle='dotted',color='red')
@@ -212,5 +210,15 @@ axs[1].plot(x,abs(y-yc10),linestyle='dashdot',color='purple')
 axs[0].legend(frameon=False,loc="lower left")
 plt.savefig('my_vandermonde_sol_2c.png',dpi=600)
 
-#Don't forget to caption your figures to describe them/
-#mention what conclusions you draw from them!
+###################################################################
+
+# 2d
+
+# Timing the previous exercises
+num = np.int64(1000)
+print(f"Running 2a {num} times takes", timeit.timeit(lambda: q2a(x,y,xx), number=num), "seconds.")
+print(f"Running 2b {num} times takes", timeit.timeit(lambda: q2b(x,y,xx,20), number=num), "seconds.")
+print(f"Running 2c {num} times takes", timeit.timeit(lambda: q2c(LU_V,V,c0.copy(),y,x,xx,10), number=num), "seconds.")
+
+# Don't forget to caption your figures to describe them/
+# mention what conclusions you draw from them! TODO

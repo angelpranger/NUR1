@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import numpy as np
 
 # overflow caused by the factorial in the traditional way for large k
@@ -29,11 +31,12 @@ def poisson3(lamda:np.float32, k:np.float32) -> np.float32:
     return P
 
 lamda_k = np.array([[1,0],[5,10],[3,21],[2.6,40],[100,5],[101,200]], dtype=np.float32)
+print("[lamda k] P1 P2 P3")
 for values in lamda_k:
     P1 = poisson1(values[0], values[1])
     P2 = poisson2(values[0], values[1])
     P3 = poisson3(values[0], values[1])
-    print(P1, P2, P3)
+    print(values, P1, P2, P3)
 
 # TODO: why do the results for the last two values differ? seems like the exponent gives a large round off error
 # version 3 is the most accurate according to wolframalpha, but why? Im not sure

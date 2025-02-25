@@ -1,12 +1,12 @@
 This is BibTeX, Version 0.99d (TeX Live 2019/Debian)
 Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
-The top-level auxiliary file: template.aux
-I found no \citation commands---while reading file template.aux
-I found no \bibdata command---while reading file template.aux
-I found no \bibstyle command---while reading file template.aux
+The top-level auxiliary file: pranger.aux
+I found no \citation commands---while reading file pranger.aux
+I found no \bibdata command---while reading file pranger.aux
+I found no \bibstyle command---while reading file pranger.aux
 You've used 0 entries,
             0 wiz_defined-function locations,
-            83 strings with 490 characters,
+            83 strings with 488 characters,
 and the built_in function-call counts, 0 in all, are:
 = -- 0
 > -- 0
