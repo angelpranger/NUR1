@@ -4,3 +4,6 @@ The coefficients of the polynomial found with LU-decomposition are
  -1.34619705e-03  3.84953383e-05 -8.32127939e-07  1.35821060e-08
  -1.65786631e-10  1.48156916e-12 -9.31152862e-15  3.80148410e-17
  -8.28186823e-20  2.55562475e-23  1.78743492e-25 -1.28961270e-56]
+Running 2a 1000 times takes 1.6017186999961268 seconds.
+Running 2b 1000 times takes 22.491641599990544 seconds.
+Running 2c 1000 times takes 1.7273653000011109 seconds.

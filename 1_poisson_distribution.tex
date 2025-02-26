@@ -1,11 +1,45 @@
 \section{Poisson distribution}
 
-# overflow caused by the factorial in the traditional way for large k
-underflow? caused by exponent of small number
-# TODO: why do the results for the last two values differ? seems like the exponent gives a large round off error
+For this exercise, I was asked to write a function that returns the Poisson probability distribution 
+$P_\lambda(k)=\frac{\lambda^ke^{-\lambda}}{k!}$ for integers $k$ given a positive mean $\lambda$.
 
-The script for question 1 is given by:
+It seems there are three potential problems to tackle. Firstly, there is the possibility of underflow for large values of $k$,
+caused by the division by a very large number $k!$. Secondly, there is the factor $\lambda^k$, which can cause overflow for large values of $\lambda$ and/or $k$.
+Thirdly, there is the factor $e^{-\lambda}$, which can become too small for large values of $\lambda$.
+
+I implemented three functions, which all compute the Poisson probability distribution in a different way.
+The first function only uses a conversion to log space, such that
+\begin{align*}
+    P_\lambda(k)&=\exp(\ln(\frac{\lambda^ke^{-\lambda}}{k!}))\\
+    &=\exp(\ln(\lambda^k)+\ln(e^{-\lambda})-\ln(k!))\\
+    &=\exp(k\ln(\lambda)-\lambda-\sum_{i=0}^{k-1}\ln(k-i)).
+\end{align*}
+The second function first uses not log space but a different order of operations, given by
+\begin{align*}
+    P_\lambda(k)&=e^{-\lambda}\cdot\frac{\lambda}{k}\cdot\frac{\lambda}{k-1}\cdot\dots\cdot\frac{\lambda}{1}.
+\end{align*}
+The third function uses a combination of this different order of operations and log space, such that
+\begin{align*}
+    P_\lambda(k)&=\exp(\ln(\frac{\lambda}{k}\cdot\frac{\lambda}{k-1}\cdot\dots\cdot\frac{\lambda}{1})-\lambda).
+\end{align*}
+
+The script in which these functions are implemented is:
 \lstinputlisting{1_poisson_distribution.py}
 
-The results are given by:
+The results are given by the following. The first column states the values for $\lambda$ and $k$, 
+the columns named $P1, P2, P3$ give the results for the first, second and third function respectively.
 \lstinputlisting{poisson_distribution.txt}
+
+We see that the results of the three functions are the same up to 6 significant digits for the first three values of $\lambda,k$.
+This is to be expected, as the corresponding values of $\lambda$ and $k$ are relatively small and thus no over or underflow is expected for any of the functions.
+For the last two rows, where $\lambda$ is relatively large, we find that the first and third function give the same result, while the result of the second function deviates.
+As potential under and overflow errors should not be exactly the same for the first and third function, this leads us to think that
+these functions actually give the correct answer (at least up to these 6 significant digits), while the second function then gives an incorrect result.
+The problem for the second function is here in the factor $e^{-\lambda}$, which for $\lambda=100$ is of order $10^{-44}$ and can thus not be stored in a 32 bit float.
+The values $\lambda,k=2.6,40$ gives a slightly different result for each of the three functions.
+According to WolframAlpha, the result of the second function is actually the most accurate here, after which the result of the third function is a close second.
+It is not clear to us why the result of the first function deviates here, but this might have something to do with the fact that $\lambda$ is relatively small while
+$k$ is relatively large (we found in class that this value of $k$ already gives problems with the original implementation of the Poisson distribution), or with the fact that
+$\lambda=2.6$ is not an integer.
+
+In conclusion, the third function gives overall the best result.
